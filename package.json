@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "gltf-loader": "^1.0.0",
+    "three": "^0.172.0",
+    "three-spritetext": "^1.10.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.11",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack --watch"
+  }
+}
