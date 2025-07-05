@@ -1,6 +1,5 @@
 import SpriteText from 'three-spritetext';
 import * as THREE from 'three';
-import fs from 'fs';
 
 import {shuffle, removeElement} from './utils';
 
@@ -59,8 +58,8 @@ if (isSmallScreen) {
 
 let textureLoader = new THREE.TextureLoader();
 
-let location_href = "https://www.memshu.com/product/animales-en-ingles-para-ninos-juego-cartas";
-let exit_href = "https://www.memshu.com";
+let location_href = "https://www.memshu.com/product/animales-en-ingles-para-ninos-juego-cartas?utm-source=game";
+let exit_href = "https://www.memshu.com?utm-source=game";
 
 
 function onWindowResize(){
