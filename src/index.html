@@ -9,9 +9,14 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 	</head>
 	<body>
-		<video id="video" autoplay loop muted playsinline style="display: none;">
-			<source src="0001-0040.mkv" type="video/mp4">
+
+		<video id="videostart" autoplay loop muted playsinline style="display: none;">
+			<source src="assets/start.mp4" type="video/mp4">
 	  	</video>
-		<script type="module" src="./new-main.js" defer></script>
+			<video id="videoend" autoplay loop muted playsinline style="display: none;">
+			<source src="assets/end.mp4" type="video/mp4">
+	  	</video>
+
+		<script type="module" src="./main.js" defer></script>
 	</body>
 </html>
