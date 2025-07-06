@@ -35,7 +35,15 @@ let exitButtonY = -2.5;
 
 let countdown = 60;
 
+let spaceBetweenCards = 3.5;
+let spaceBetweenCardsY = 2.5;
+
+
+let cardScaleX = 3;
+let cardScaleY = 2;
+
 const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
+const verySmallScreen = window.matchMedia("(max-width: 430px)").matches;
 
 if (isSmallScreen) {
   console.log("Small screen, likely mobile");
@@ -45,15 +53,24 @@ if (isSmallScreen) {
   row_size = 4;
   total_cards = 4;
   cards = cards_stack.splice(0, 4);
-  scaleFactorVideo = 1.8;
+  scaleFactorVideo = 1.6;
 
-  visitShopButtonX = 1.4;
-  visitShopButtonY = -2;
+  visitShopButtonX = 0;
+  visitShopButtonY = -1.8;
 
-  exitButtonX = -1.8;
-  exitButtonY = -2;
+  exitButtonX = 0;
+  exitButtonY = -3.8;
 
-  countdown = 15;
+  countdown = 5;
+
+}
+if(verySmallScreen){
+     boxPlaneInitY = -3;
+     boxPlaneInitXMin = -1.3;
+     spaceBetweenCards = 2.5;
+     cardScaleX = 2.3;
+     cardScaleY = 1.53;
+     spaceBetweenCardsY = 2;
 }
 
 let textureLoader = new THREE.TextureLoader();
@@ -70,6 +87,7 @@ function onWindowResize(){
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     if(camera.aspect > 1){
+
     }
 }
 
@@ -96,8 +114,8 @@ const cardMaterialBlue = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
 });
 
-const boxGeometry = new THREE.PlaneGeometry(3, 2);
-const boxGeometryImage = new THREE.PlaneGeometry(3, 2);
+const boxGeometry = new THREE.PlaneGeometry(cardScaleX, cardScaleY);
+const boxGeometryImage = new THREE.PlaneGeometry(cardScaleX, cardScaleY);
 
 /* Game over menu */
 
@@ -112,6 +130,7 @@ videoTexture.magFilter = THREE.LinearFilter;
 videoTexture.format = THREE.RGBFormat;
 
 const material = new THREE.MeshBasicMaterial({ map: videoTexture });
+
 const geometry = new THREE.PlaneGeometry(3.9, 2.25); // Adjust aspect ratio for your video
 const plane = new THREE.Mesh(geometry, material);
 plane.scale.set(scaleFactorVideo, scaleFactorVideo,scaleFactorVideo);
@@ -278,7 +297,7 @@ for(var i=0; i<row_size;i++){
         if(j == 0){
             boxPlaneInitX = boxPlaneInitXMin;
         }else{
-            boxPlaneInitX += 3.5;
+            boxPlaneInitX += spaceBetweenCards;
         }
 
         cardPlaneDown.position.set(0, 0, 0);
@@ -300,7 +319,7 @@ for(var i=0; i<row_size;i++){
 
     }
 
-    boxPlaneInitY += 2.5;
+    boxPlaneInitY += spaceBetweenCardsY;
 
 }
 
@@ -353,6 +372,8 @@ function addVisitShopButtonMenu(){
     const menuVisitPlaneMaterial = new THREE.MeshBasicMaterial({ map: menuVisitTexture, transparent: true});
     menuVisitPlane = new THREE.Mesh(menuVisitGeometry, menuVisitPlaneMaterial);
 
+    menuVisitPlane.scale.set(1.3, 1.3, 1.3);
+
     menuVisitPlane.position.x = visitShopButtonX;
     menuVisitPlane.position.y = visitShopButtonY;
     menuVisitPlane.position.z = 0.001; // Slight offset to avoid Z-fighting
@@ -388,6 +409,10 @@ function onMouseClick(event) {
      // Convert mouse position to normalized device coordinates (-1 to +1)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    if(cardCurrentlySelected.length == 2){
+        return
+    }
 
     // Update the raycaster
     raycaster.setFromCamera(mouse, camera);
