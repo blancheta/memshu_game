@@ -27,16 +27,18 @@ let cards = cards_stack.splice(0, 8);
 
 let scaleFactorVideo = 3.2;
 
-let visitShopButtonX = 1.5;
-let visitShopButtonY = -2;
+let visitShopButtonX = 0;
+let visitShopButtonY = -3;
 
-let exitButtonX = -1.5;
-let exitButtonY = -2.5;
+let exitButtonX = 0;
+let exitButtonY = -4.8;
 
 let countdown = 60;
 
 let spaceBetweenCards = 3.5;
 let spaceBetweenCardsY = 2.5;
+
+let scaleVisitButton = 1;
 
 
 let cardScaleX = 3;
@@ -61,7 +63,9 @@ if (isSmallScreen) {
   exitButtonX = 0;
   exitButtonY = -3.8;
 
-  countdown = 5;
+  countdown = 15;
+
+  scaleVisitButton = 1.3;
 
 }
 if(verySmallScreen){
