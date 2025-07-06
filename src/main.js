@@ -426,7 +426,7 @@ function onMouseClick(event) {
         gameState = "running";
         backgroundMusic.play();
 
-    }else if(gameState == "gameover" && countdown <= 0){
+    }else if(gameState == "gameover"){
         const intersectsVisitShop = raycaster.intersectObjects([menuVisitPlane]);
         const intersectsExit = raycaster.intersectObjects([exitGame]);
 
