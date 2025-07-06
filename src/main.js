@@ -14,6 +14,8 @@ function sleep(ms) {
 
 import cards_stack from './fruits.json';
 
+let wait = false;
+
 let column_size = 4;
 let row_size = 4;
 let total_cards = 8;
@@ -410,13 +412,9 @@ let foundPairs = [];
 
 function onMouseClick(event) {
 
-     // Convert mouse position to normalized device coordinates (-1 to +1)
+    // Convert mouse position to normalized device coordinates (-1 to +1)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    if(cardCurrentlySelected.length == 2){
-        return
-    }
 
     // Update the raycaster
     raycaster.setFromCamera(mouse, camera);
@@ -469,6 +467,8 @@ function onMouseClick(event) {
 
             has_match = true;
 
+            wait = true;
+
             winSound.play();
 
             foundPairs.push(firstCard);
@@ -477,6 +477,7 @@ function onMouseClick(event) {
          }else if(has_match == false){
 
             setTimeout(() => {
+              wait = false;
               firstCard.visible = true;
                secondCard.visible = true;
             }, "1000");
