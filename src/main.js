@@ -1,9 +1,46 @@
 import SpriteText from 'three-spritetext';
 import * as THREE from 'three';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
 import {shuffle, removeElement} from './utils';
 
 const scene = new THREE.Scene();
+
+const loadingManager = new THREE.LoadingManager();
+const svgLoader = new SVGLoader(loadingManager);
+
+function loadSVG(path, name){
+
+    const svgGroup = new THREE.Group();
+
+    svgLoader.load(path, (data) => {
+
+      let paths = data.paths;
+
+      for (let path of paths) {
+        let shapes = SVGLoader.createShapes(path);
+
+        for (let shape of shapes) {
+          let geometry = new THREE.ShapeGeometry(shape);
+          let material = new THREE.MeshBasicMaterial({
+            color: path.color,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            transparent: false
+          });
+
+          let mesh = new THREE.Mesh(geometry, material);
+          mesh.name = name;
+          svgGroup.add(mesh); // Add each shape mesh to the group
+
+        }
+      }
+
+    });
+
+    return svgGroup;
+}
+
 
 const camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 0.1, 100 );
 window.addEventListener( 'resize', onWindowResize, false );
@@ -13,8 +50,6 @@ function sleep(ms) {
 }
 
 import cards_stack from './fruits.json';
-
-let wait = false;
 
 let column_size = 4;
 let row_size = 4;
@@ -43,8 +78,8 @@ let spaceBetweenCardsY = 2.5;
 let scaleVisitButton = 1;
 
 
-let cardScaleX = 3;
-let cardScaleY = 2;
+let cardScaleX = 3.3;
+let cardScaleY = 2.3;
 
 const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
 const verySmallScreen = window.matchMedia("(max-width: 430px)").matches;
@@ -97,48 +132,46 @@ function onWindowResize(){
     }
 }
 
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setClearColor( 0xfafafa );
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
 const loader = new THREE.TextureLoader();
-scene.background = loader.load("assets/sky.jpg");
 
-const cardTextureYellow = textureLoader.load("assets/YELLOW_CARD.jpg");
-cardTextureYellow.colorSpace = THREE.SRGBColorSpace;
 
-const cardMaterialYellow = new THREE.MeshBasicMaterial({
-    map: cardTextureYellow,
-    side: THREE.DoubleSide,
-});
+//scene.background = loader.load("assets/sky.jpg");
 
-const boxTextureBlue = textureLoader.load("assets/BLUE_CARD.jpg");
-boxTextureBlue.colorSpace = THREE.SRGBColorSpace;
+const cardMaterialYellow = loadTexture("assets/cards/YELLOW_CARD.svg");
 
-const cardMaterialBlue = new THREE.MeshBasicMaterial({
-    map: boxTextureBlue,
-    side: THREE.DoubleSide,
-});
+const cardMaterialBlue = loadTexture("assets/cards/BLUE_CARD.svg");
 
 const boxGeometry = new THREE.PlaneGeometry(cardScaleX, cardScaleY);
 const boxGeometryImage = new THREE.PlaneGeometry(cardScaleX, cardScaleY);
 
-/* Game over menu */
-
 // Get video element
 const video = document.getElementById('videostart');
 video.play(); // Ensure autoplay works with muted + playsinline
+video.addEventListener('playing', () => {
+    material.opacity = 1;
+});
 
 // Create video texture
 const videoTexture = new THREE.VideoTexture(video);
 videoTexture.minFilter = THREE.LinearFilter;
 videoTexture.magFilter = THREE.LinearFilter;
+videoTexture.anisotropy = renderer.capabilities.getMaxAnisotropy(); // very important
 videoTexture.format = THREE.RGBFormat;
 
-const material = new THREE.MeshBasicMaterial({ map: videoTexture });
+const material = new THREE.MeshBasicMaterial({
+    map: videoTexture,
+    transparent: true,
+    opacity: 0, // start fully transparent
+});
 
 const geometry = new THREE.PlaneGeometry(3.9, 2.25); // Adjust aspect ratio for your video
 const plane = new THREE.Mesh(geometry, material);
+
 plane.scale.set(scaleFactorVideo, scaleFactorVideo,scaleFactorVideo);
 plane.position.z = 0.007;
 plane.position.x = 0 ;
@@ -151,6 +184,7 @@ scene.add(plane);
 const videoEnd = document.getElementById('videoend');
 // Create video texture
 const videoTextureEnd = new THREE.VideoTexture(videoEnd);
+videoTextureEnd.anisotropy = renderer.capabilities.getMaxAnisotropy(); // very important
 videoTextureEnd.minFilter = THREE.LinearFilter;
 videoTextureEnd.magFilter = THREE.LinearFilter;
 videoTextureEnd.format = THREE.RGBFormat;
@@ -165,7 +199,6 @@ planeVideoEnd.position.y = 2;
 const listener = new THREE.AudioListener();
 
 const cardPop = new THREE.Audio(listener);
-
 
 const audioLoader = new THREE.AudioLoader();
 
@@ -212,48 +245,28 @@ for(var card of cards){
     cardSongs[card] = cardSong;
 }
 
-for(var card of cards){
+for(let card of cards){
 
     /* Build yellow cards */
 
     var card_name = card;
     console.log(`Yellow card: ${card_name}`);
-    const cardTexture = textureLoader.load(`assets/cards/${card_name}.webp`);
-    cardTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const cardMaterialImage = new THREE.MeshBasicMaterial({
-        map: cardTexture,
-        side: THREE.DoubleSide,
-    });
+   let cardMaterialImage = loadSVG(`assets/cards/${card_name}.svg`, card_name);
 
    let cardPlaneFaceDown = new THREE.Mesh(boxGeometry, cardMaterialYellow);
    cardPlaneFaceDown.name = card_name;
 
-   let cardPlaneImageFaceUp = new THREE.Mesh(boxGeometryImage, cardMaterialImage);
-
-   cardPlanes.push([cardPlaneFaceDown, cardPlaneImageFaceUp, card_name]);
-
-   console.log(`Blue card: ${card_name}`);
-
-    var card_name = card;
+   cardPlanes.push([cardPlaneFaceDown, cardMaterialImage, card_name]);
 
   /* Draw blue cards */
 
-      const cardTextureWord = textureLoader.load(`assets/cards/${card_name}-text.webp`);
-    cardTextureWord.colorSpace = THREE.SRGBColorSpace;
-
- const cardMaterialWord = new THREE.MeshBasicMaterial({
-    map: cardTextureWord,
-    side: THREE.DoubleSide,
-});
+  let cardMeshGroupWord = loadSVG(`assets/cards/${card_name}_text.svg`, card_name);
+  cardMeshGroupWord.name = card_name;
 
    let cardPlaneFaceDownBlue = new THREE.Mesh(boxGeometry, cardMaterialBlue);
    cardPlaneFaceDownBlue.name = card_name;
-
-   let cardPlaneFaceUpBlue = new THREE.Mesh(boxGeometry, cardMaterialWord);
-   cardPlaneFaceUpBlue.name = card_name;
-
-   cardPlanes.push([cardPlaneFaceDownBlue, cardPlaneFaceUpBlue, card_name]);
+   cardPlanes.push([cardPlaneFaceDownBlue, cardMeshGroupWord, card_name]);
 
 }
 
@@ -261,25 +274,16 @@ cardPlanes = shuffle(cardPlanes);
 
 camera.position.z = 5;
 
-const boxMaterialBlue = new THREE.MeshBasicMaterial({
-  map: boxTextureBlue,
-  side: THREE.DoubleSide,
-});
-
 let card_count = 0;
 
 let boxMaterial = null;
 
 let gameState = "not-started";
-//let gameState = "running";
-
-
 
 let myText = new SpriteText(countdown,1);
 myText.color = "black";
 myText.position.x = 0;
 myText.position.y = 5;
-scene.add(myText);
 
 let exitGame = new SpriteText("exit", 0.5);
 exitGame.color = "black";
@@ -311,18 +315,21 @@ for(var i=0; i<row_size;i++){
         cardPlaneDown.position.y = boxPlaneInitY;
         cardPlaneDown.position.z = 0.001; // Slight offset to avoid Z-fighting
 
+        cardPlaneDown.visible = true;
+
+        cardPlaneUp.scale.set(0.05, -0.05, 0.05);
+
         cardPlaneUp.position.set(0, 0, 0);
-        cardPlaneUp.position.x = boxPlaneInitX;
-        cardPlaneUp.position.y = boxPlaneInitY;
+        cardPlaneUp.position.x = boxPlaneInitX - 1.5;
+        cardPlaneUp.position.y = boxPlaneInitY + 1;
+        cardPlaneUp.position.z = 0.001; // Slight offset to avoid Z-fighting
 
         cardPlaneUp.visible = true;
-        cardPlaneDown.visible = true;
 
         scene.add(cardPlaneUp);
         scene.add(cardPlaneDown);
 
         cardMatrix.push(cardPlaneDown);
-
     }
 
     boxPlaneInitY += spaceBetweenCardsY;
@@ -333,14 +340,31 @@ let menuBGPlane;
 let menuPlayPlane;
 let menuGameOverPlane;
 
+function loadTexture(path) {
+    const mat = new THREE.MeshBasicMaterial({
+        opacity: 0,
+        transparent: true // needed if you want to see the opacity effect
+    });
+
+    const loader = new THREE.TextureLoader();
+    loader.load(path, function (texture) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        mat.map = texture;
+        mat.opacity = 1;
+        mat.needsUpdate = true;
+    });
+
+    return mat;
+}
+
 function addBackgroundMenu(){
 
     // Add Menu at the top of everything
     const menuBGPlaneWidth = 50;  // Width of each plane
     const menuBGPlaneHeight = 50;  // Height of each plane
     const menuBGGeometry = new THREE.PlaneGeometry(menuBGPlaneWidth, menuBGPlaneHeight);
-    const menuBGTexture = loader.load('assets/menu-background.png');
-    const menuBGMaterial = new THREE.MeshBasicMaterial({ map: menuBGTexture, transparent: true});
+    const menuBGMaterial = loadTexture('assets/menu-background.png')
+
     menuBGPlane = new THREE.Mesh(menuBGGeometry, menuBGMaterial);
     menuBGPlane.position.x = 0;
     menuBGPlane.position.y -= 4.5;
@@ -355,8 +379,9 @@ function addStartButtonMenu(){
     const menuPlayPlaneHeight = 2;  // Height of each plane
 
     const menuPlayGeometry = new THREE.PlaneGeometry(menuPlayPlaneWidth, menuPlayPlaneHeight);
-    const menuPlayTexture = loader.load('assets/play-button.png');
-    const menuPlayPlaneMaterial = new THREE.MeshBasicMaterial({ map: menuPlayTexture, transparent: true});
+
+    const menuPlayPlaneMaterial = loadTexture('assets/play-button.png');
+
     menuPlayPlane = new THREE.Mesh(menuPlayGeometry, menuPlayPlaneMaterial);
 
     menuPlayPlane.position.y = -3;
@@ -391,21 +416,6 @@ function addVisitShopButtonMenu(){
 addBackgroundMenu();
 addStartButtonMenu();
 
-function findPlanesByName(scene, nameToFind) {
-  const matchingPlanes = [];
-
-  scene.traverse((object) => {
-    // Check if it's a Mesh and has PlaneGeometry
-    if (object.isMesh && object.geometry.type === 'PlaneGeometry') {
-      if (object.name === nameToFind) {
-        matchingPlanes.push(object);
-      }
-    }
-  });
-
-  return matchingPlanes;
-}
-
 let cardCurrentlySelected = [];
 
 let foundPairs = [];
@@ -437,16 +447,13 @@ function onMouseClick(event) {
         }
     }else if(gameState == "running"){
 
-     // Balloons clicks
      const intersects = raycaster.intersectObjects(cardMatrix);
      let clickedPlane;
 
      if (intersects.length > 0) {
         cardPop.play();
         clickedPlane = intersects[0].object;
-        console.log(clickedPlane.name);
         let cardS = cardSongs[clickedPlane.name];
-        console.log(cardS);
         cardS.play();
         if(clickedPlane.visible == true){
             clickedPlane.visible = false;
@@ -467,17 +474,13 @@ function onMouseClick(event) {
 
             has_match = true;
 
-            wait = true;
-
             winSound.play();
 
             foundPairs.push(firstCard);
-            console.log(foundPairs.length);
 
          }else if(has_match == false){
 
             setTimeout(() => {
-              wait = false;
               firstCard.visible = true;
                secondCard.visible = true;
             }, "1000");
@@ -495,7 +498,6 @@ function onMouseClick(event) {
 
          cardCurrentlySelected = []
      }
-
   }
 }
 
@@ -506,7 +508,6 @@ function displayPlayUnlimited(){
     scene.add(myText);
 
 }
-
 
 function updateTimerTexture(countdown) {
     myText = new SpriteText(countdown,1);
@@ -521,7 +522,6 @@ let interval = setInterval(() => {
     if(gameState == "running"){
         countdown--;
         if (countdown < 0) {
-//                  addBackgroundMenu();
           clearInterval(interval);
 
         } else {
@@ -534,12 +534,12 @@ let interval = setInterval(() => {
 
 var showMenuOff = false;
 
+
 function animate() {
 
     if(countdown == 0 && showMenuOff == false){
        gameState = "gameover";
 
-       console.log("End of the game");
        addBackgroundMenu()
        addVisitShopButtonMenu();
        scene.add(exitGame);
@@ -550,6 +550,8 @@ function animate() {
 
 	renderer.render( scene, camera );
 }
+
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 renderer.setAnimationLoop( animate );
 
